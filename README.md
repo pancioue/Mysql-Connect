@@ -37,3 +37,22 @@ revoke all, GRANT OPTION From 'user'@'localhost';
 ```sql
 DROP USER 'user'@'localhost'; 
 ```
+
+## 情境:限制帳號只能讀取某張表格
+``` sql
+CREATE USER 'tornado'@'172.22.0.1' IDENTIFIED BY 'password'
+```
+``` sql
+GRANT SELECT ON database.`table` TO `tornado`@`172.22.0.1`
+```
+
+* 連線時報錯
+```
+Client does not support authentication protocol requested by server; consider upgrading MySQL client
+```
+原因是mysql8更改了密碼加密模式，由mysql_native_password改為caching_sha2_password  
+此案例為java程式要連遠端db，可能是java涵式庫太舊
+``` sql
+ALTER USER 'tornado'@'172.22.0.1' IDENTIFIED WITH mysql_native_password BY 'password';
+FLUSH PRIVILEGES;
+```
