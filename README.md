@@ -60,6 +60,6 @@ GRANT SELECT ON database.`table` TO `USER`@`IP`
   
 ## 更改帳號ip
 ```
-RENAME USER 'panda'@'localhost' TO 'patrick'@'127.0.0.1';
+RENAME USER 'jeffrey'@'localhost' TO 'jeff'@'127.0.0.1';
 ```
 此語法可以連同此帳號其他grants一併修改
