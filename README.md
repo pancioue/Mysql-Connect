@@ -57,3 +57,9 @@ GRANT SELECT ON database.`table` TO `USER`@`IP`
   FLUSH PRIVILEGES;
   ```
   或者創建時直接下`CREATE USER 'USER'@'IP' IDENTIFIED WITH mysql_native_password BY 'PASSWORD'`
+  
+## 更改帳號ip
+```
+RENAME USER 'panda'@'localhost' TO 'patrick'@'127.0.0.1';
+```
+此語法可以連同此帳號其他grants一併修改
