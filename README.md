@@ -1,51 +1,107 @@
-## 顯示當前使用者的grants
-```sh
+## 顯示當前使用者
+``` SQL
+select USER();
+
+select CURRENT_USER();
+```
+CURRENT_USER shows who you are authenticated as, while USER shows who you tried to authenticate as.
+
+
+## grants
+### 顯示使用者的grants
+``` sql
+show grants for `user_name`@`ip_address`
+```
+
+
+### 顯示當前使用者的grants
+```sql
+show grants for CURRENT_USER;
+
 show grants;
-# SHOW GRANTS FOR CURRENT_USER; # 這也是可以
 ```
 
-
-## Allow all remote connections
+### GRANT 語法
 ```sql
-GRANT ALL ON *.* to user@localhost IDENTIFIED BY 'password';
-GRANT ALL ON *.* to user@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON *.* TO `user_name`@`ip_address`;
 ```
-兩者都必須建立，對mysql來說是不同帳號
 
-參考: https://stackoverflow.com/questions/10236000/allow-all-remote-connections-mysql
-
-
-
-## 創建帳號
-IDENTIFIED可以在創建帳號時寫入，也可以在GRANT時一起附上，其實上面的指令也是創建帳號  
-先創建再GRANT
+### 移除權限
 ```sql
-CREATE USER 'user'@'localhost' IDENTIFIED BY 'PASSWORD';
-GRANT ALL PRIVILEGES ON *.* TO 'user'@'localhost' WITH GRANT OPTION;
+revoke all ON *.*  From `user_name`@`ip_address`;
 ```
-* 注意這裡有沒有加`PRIVILEGES`都通，但從`show grants`指令所看到的結果來看，有加應該是比較正規的做法
 
-
-## 移除帳號
-`revoke all`並不會把使用者移除，`show grants`依然會有GRANT USAGE ON ...
+### 情境:限制帳號只能讀取某張表格
 ```sql
-revoke all, GRANT OPTION From 'user'@'localhost';
+GRANT SELECT ON database.`table` TO `user_name`@`ip_address`;
 ```
-依然還是可以登入
 
-要完全移除必須
+
+## Privilege level
+* Global: \*.\*
+* Database: [db_name].*
+* Table: [db_name].[table_name]
+* Stored routine: [db_name].[routine_name]  
+(總共有六種級別，另外兩種column、proxy級別)
+
+global 的權限:例如`create user`，只能用在全域
 ```sql
-DROP USER 'user'@'localhost'; 
+GRANT CREATE USER ON *.* TO `user_name`@'localhost';
 ```
 
-## 情境:限制帳號只能讀取某張表格
-``` sql
-CREATE USER 'USER'@'IP' IDENTIFIED BY 'PASSWORD'
-```
-``` sql
-GRANT SELECT ON database.`table` TO `USER`@`IP`
+有些權限可以在global，也可以在db級使用
+```sql
+GRANT SELECT ON Database.* TO `user_name`@'localhost';
+GRANT SELECT ON *.* TO `user_name`@'localhost';
 ```
 
+https://dev.mysql.com/doc/refman/8.0/en/grant.html
+
+
+## GRANT OPTION
+```SQL
+GRANT ALL PRIVILEGES ON *.* TO `user_name`@`ip_address` WITH GRANT OPTION;
+```
+ex:  
+當沒有轉移權限時，無法使用grant 
+```sql
+GRANT select ON drug.* TO USER
+```
+給予轉移權限  
+```sql
+grant select,drop on drug.* to patrick with grant option
+```
+* 無法授予超過自己grant option級別的權限
+  ```sql
+  GRANT select ON *.* TO USER
+  ```
+* grant option 指定的重點是作用域，前面的權限並不重要
+* 要授予轉移權限時，必須自己擁有grant option，但不一定需要有操作權限
+  ```sql
+  GRANT GRANT OPTION ON *.* TO USER
+  ```
+  或者
+  ```
+  GRANT USAGE ON *.* TO USER WITH GRANT OPTION
+  ```
+
+
+## RENAME
+```sql
+RENAME USER `patrick`@`localhost` TO `jeff`@`%`;
+```
+此語法可以連同此帳號其他grants一併修改
+
+## FLUSH PRIVILEGES
+使用 GRANT, REVOKE, SET PASSWORD, and RENAME USER 語法不需要再下 `FLUSH PRIVILEGES`
+> If you modify the grant tables indirectly using an account-management statement, the server notices these changes and loads the grant tables into memory again immediately. Account-management statements are described in Section 13.7.1, “Account Management Statements”. Examples include GRANT, REVOKE, SET PASSWORD, and RENAME USER.
+
+直接修改 grant table，需要下 `FLUSH PRIVILEGES`
+> If you modify the grant tables directly using statements such as INSERT, UPDATE, or DELETE (which is not recommended), the changes have no effect on privilege checking until you either tell the server to reload the tables or restart it. Thus, if you change the grant tables directly but forget to reload them, the changes have no effect until you restart the server. This may leave you wondering why your changes seem to make no difference!
+
+參考: https://dev.mysql.com/doc/refman/5.7/en/privilege-changes.html
+
+## debug
 * 連線時報錯
   ```
   Client does not support authentication protocol requested by server; consider upgrading MySQL client
@@ -57,9 +113,5 @@ GRANT SELECT ON database.`table` TO `USER`@`IP`
   FLUSH PRIVILEGES;
   ```
   或者創建時直接下`CREATE USER 'USER'@'IP' IDENTIFIED WITH mysql_native_password BY 'PASSWORD'`
-  
-## 更改帳號ip
-```
-RENAME USER 'jeffrey'@'localhost' TO 'jeff'@'127.0.0.1';
-```
-此語法可以連同此帳號其他grants一併修改
+
+
