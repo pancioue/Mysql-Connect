@@ -99,7 +99,7 @@ RENAME USER `patrick`@`localhost` TO `jeff`@`%`;
 直接修改 grant table，需要下 `FLUSH PRIVILEGES`
 > If you modify the grant tables directly using statements such as INSERT, UPDATE, or DELETE (which is not recommended), the changes have no effect on privilege checking until you either tell the server to reload the tables or restart it. Thus, if you change the grant tables directly but forget to reload them, the changes have no effect until you restart the server. This may leave you wondering why your changes seem to make no difference!
 
-參考: https://dev.mysql.com/doc/refman/5.7/en/privilege-changes.html
+參考: https://dev.mysql.com/doc/refman/8.0/en/privilege-changes.html
 
 ## debug
 * 連線時報錯
